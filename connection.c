@@ -1,44 +1,44 @@
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+ #include <stdio.h> 
+    #include <stdlib.h> 
+    #include <errno.h> 
+    #include <string.h> 
+    #include <netdb.h> 
+    #include <sys/types.h> 
+    #include <netinet/in.h> 
+    #include <sys/socket.h> 
+    #include <unistd.h>
+#define PORT 6667
 
-int main()
-{
-const char* hostname="herbert.freenode.net";
-const char* portname="6667";
-struct addrinfo hints;
-memset(&hints,0,sizeof(hints));
-hints.ai_family=AF_UNSPEC;
-hints.ai_socktype=SOCK_STREAM;
-hints.ai_protocol=0;
-hints.ai_flags=AI_ADDRCONFIG;
-struct addrinfo* res=0;
-int err=getaddrinfo(hostname,portname,&hints,&res);
-if (err!=0) {
-    die("failed to resolve remote socket address (err=%d)",err);
-}
-int fd=socket(res->ai_family,res->ai_socktype,res->ai_protocol);
-if (fd==-1) {
-    die("%s",strerror(errno));
-}
-if (connect(fd,res->ai_addr,res->ai_addrlen)==-1) {
-    die("%s",strerror(errno));
-}
-freeaddrinfo(res);
+int main(){
+	char *ip = "chat.freenode.net";
+	struct sockaddr_in server_socket;
+	struct hostent *host;
+	int sock = 0;
+	char buffer[1024];
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if(sock == -1)
+	{
+		printf("Failed to create the socket! \n");
+		return -1;
+	}
 
-char buffer[256];
-for (;;) {
-    ssize_t count=read(fd,buffer,sizeof(buffer));
-    if (count<0) {
-        if (errno!=EINTR) die("%s",strerror(errno));
-    } else if (count==0) {
-        break;
-    } else {
-        write(STDOUT_FILENO,buffer,count);
-    }
-}
-close(fd);
+	host = gethostbyname(ip);
+	if(host == NULL)
+	{
+		printf("Failed to get the host name! \n");
+		return -1;
+	}
+
+	server_socket.sin_family = AF_INET;
+	server_socket.sin_port = htons(PORT);
+	server_socket.sin_addr = *((struct in_addr *)host->h_addr);
+	bzero(&(server_socket.sin_zero), 8);
+	
+	if(connect(sock, (struct sockaddr *) &server_socket, sizeof(struct sockaddr)) == -1)
+	{
+		printf("Failed to connect! \n");
+		return -1;
+	}
+
+	printf("Connected!");
 }
