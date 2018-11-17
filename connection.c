@@ -9,41 +9,77 @@
 #include <unistd.h>
 #define PORT 6667
 
-void sendMessage(int socket, char* msg, char* errmsg){
-	if(send(socket, msg, strlen(msg), 0) < 0)
+int sock = 0;
+
+void sendMessage(char* msg){
+	if(send(sock, msg, strlen(msg), 0) < 0)
 	{
-		printf("%s", errmsg);
+		printf("%s%s\n", "An error has occure when sending the message: ", msg);
 	}
 }
 
-void setNickname(int socket, char* nick){
+void setNickname(char* nick){
 	char msg[128] = "NICK ";
 	strcat(msg, nick);
 	strcat(msg, "\r\n");
-	sendMessage(socket, msg, "Failed to send nick change!\n");
+	sendMessage(msg);
 }
 
-void setUser(int socket, char* nick){
+void setUser(char* nick){
 	char msg[128] = "USER ";
 	strcat(msg, nick);
 	strcat(msg, " 0 * :");
 	strcat(msg, nick);
 	strcat(msg, "\r\n");
-	sendMessage(socket, msg, "Failed User command!\n");
+	sendMessage(msg);
 }
 
-void joinChannel(int socket, char* channel){
+void joinChannel(char* channel){
 	char msg[128] = "JOIN ";
 	strcat(msg, channel);
 	strcat(msg, "\r\n");
-	sendMessage(socket, msg, "Failed to send join command!\n");
+	sendMessage(msg);
+}
+
+void onMessage(char* command, char* args[], int numArgs, char* by){
+	if(strcmp(command,"PING") == 0)
+	{
+		char msg[128] = "PONG ";
+		strcat(msg, args[0]);
+		strcat(msg, "\r\n");
+		sendMessage(msg);
+	}
+	else
+	{
+		printf("Unknown command recieved!: ");
+		printf("%s ", command);
+		for(int index = 0; index < numArgs - 1; index++){
+			printf("%s ", args[index]);
+		}
+		printf("\n");
+	}
+}
+
+int readLine(char* buffer){
+	int length = 0;
+	int found = 0;
+	char character;
+	while(!found){
+		int byteIn = recv(sock, &character, 1, 0);
+		buffer[length] = character;
+		length++;
+		if (length >= 2 && buffer[length-2] == '\r' && buffer[length-1] == '\n') {
+            		buffer[length-2] = '\0';
+			found = 1;
+            		return length;
+        	}
+	}
 }
 
 int main(){
 	char *ip = "195.154.200.232";
 	struct sockaddr_in server_socket;
 	struct hostent *host;
-	int sock = 0;
 	int numbytes;
 	char buffer[1024];
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,29 +108,35 @@ int main(){
 	}
 	
 	char* userName = "TurkeyBotC";
-	setNickname(sock, userName);
-	setUser(sock, userName);
-	joinChannel(sock, "#TheprogrammingTurkey");
+	setNickname(userName);
+	setUser(userName);
+	joinChannel("#TheprogrammingTurkey");
 	printf("Connected! \n");
 
 	while(1)
 	{
-		if((numbytes = recv(sock, buffer, 1024, 0)) == -1)
-		{
-			printf("Recive error! \n");
-		}
-
-		buffer[numbytes] = '\0';
+		int numbytes = readLine(buffer);
 		if(numbytes > 0)
 		{
-			//char * pch;
-			//pch = strtok (str," ");
-			//while (pch != NULL)
-			//{
-			//	printf ("%s\n",pch);
-			//	pch = strtok (NULL, " ,.-");
-			//}
-			printf("Recived: %s", buffer);
+			char* command;
+			char** args;
+			char* by = "";
+			int numArgs = 0;
+			char* subStr = strtok (buffer," ");
+			if(subStr[0] == ':'){
+				by = subStr;
+				subStr = strtok (NULL," ");
+			}
+			command = subStr;
+			int index = 0;
+			while (subStr != NULL)
+			{
+				subStr = strtok (NULL, " ");
+				args[index] = subStr;
+				index++;
+			}
+			numArgs = index;
+			onMessage(command, args, numArgs, by);
 		}
 	}
 
