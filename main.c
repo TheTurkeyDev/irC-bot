@@ -3,44 +3,53 @@
 #include <string.h>
 #include <sys/utsname.h>
 
-void onIRCMessage(char* msg, char* from) {
+void onIRCMessage(char* msg, char* from, char* channel) {
 	char* command = strtok (msg," ");
-	if(strcmp(command, "!hi")){
-		char msg[512];
-		strcat(msg, "Hello ");
-		strcat(msg, from);
-		strcat(msg, " !\0");
+	if(strcmp(command, "!hi") == 0){
+		char response[512] = "";
+		strcat(response, "Hello ");
+		strcat(response, from);
+		strcat(response, " !");
+		sendChat(channel, response);
 	}
-
-	if(strcmp(command, "!info")) {
-		char msg[512];
+	else if(strcmp(command, "!info") == 0) {
+		char response[512] = "";
 
 		struct utsname unameInfo;
 		uname(&unameInfo);
 
-		strcat(msg, "System: ");
-		strcat(msg, unameInfo.sysname);
-		strcat(msg, "\n");
+		memset(response, 0, sizeof response);
+		strcat(response, "System: ");
+		strcat(response, unameInfo.sysname);
+		sendChat(channel, response);
 
-		strcat(msg, "Node: ");
-		strcat(msg, unameInfo.nodename);
-		strcat(msg, "\n");
+		memset(response, 0, sizeof response);
+		strcat(response, "Node: ");
+		strcat(response, unameInfo.nodename);
+		strcat(response, "\n");
+		sendChat(channel, response);
 
-		strcat(msg, "Release: ");
-		strcat(msg, unameInfo.release);
-		strcat(msg, "\n");
+		memset(response, 0, sizeof response);
+		strcat(response, "Release: ");
+		strcat(response, unameInfo.release);
+		strcat(response, "\n");
+		sendChat(channel, response);
 
-		strcat(msg, "Version: ");
-		strcat(msg, unameInfo.version);
-		strcat(msg, "\n");
+		memset(response, 0, sizeof response);
+		strcat(response, "Version: ");
+		strcat(response, unameInfo.version);
+		strcat(response, "\n");
+		sendChat(channel, response);
 
-		strcat(msg, "Machine: ");
-		strcat(msg, unameInfo.machine);
-		strcat(msg, "\n");
+		memset(response, 0, sizeof response);
+		strcat(response, "Machine: ");
+		strcat(response, unameInfo.machine);
+		strcat(response, "\n");
+		sendChat(channel, response);
 
 	}
 
-	printf("Recieved a message from: %s\"%s\"\n", from, msg);
+	printf("Recieved a message from: %s \"%s\" in: %s\n", from, msg, channel);
 }
 
 int main(){

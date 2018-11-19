@@ -12,14 +12,9 @@
 
 int sock = 0;
 pthread_t inputThread; 
-void (*onMsgPtr)(char*, char*);
+void (*onMsgPtr)(char*, char*, char*);
 
 void sendMessage(char* msg){
-	int length = strlen(msg);
-	if(msg[length - 2] != '\r' || msg[length - 1] != '\n'){
-		msg[length - 2] == '\r';
-		msg[length - 1] == '\n';
-	}
 	if(send(sock, msg, strlen(msg), 0) < 0)
 	{
 		printf("%s%s\n", "An error has occure when sending the message: ", msg);
@@ -49,6 +44,15 @@ void joinChannel(char* channel){
 	sendMessage(msg);
 }
 
+void sendChat(char* channel, char* toSend){
+	char msg[512] = "PRIVMSG ";
+	strcat(msg, channel);
+	strcat(msg, " :");
+	strcat(msg, toSend);
+	strcat(msg, "\r\n");
+	sendMessage(msg);
+}
+
 void onMessage(char* command, char* args[], int numArgs, char* by){
 	if(strcmp(command,"PING") == 0){
 		char msg[512] = "PONG ";
@@ -60,16 +64,29 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		if(onMsgPtr != NULL){
 			char msg[1024];
 			int index = 0;
+			char channel[128];
+			int chanFound = 0;
 			for(int i = 0; i < numArgs - 1; i++){
 				for(int j = 0; j <= strlen(args[i]) - 1; j++){
 					if(args[i][j] != '\0'){
-						msg[index] = args[i][j];
+						if(!chanFound){
+							if(args[i][j] == ':'){
+								chanFound = 1;
+								index = -1;
+							}
+							else{
+								channel[index] = args[i][j];
+							}
+						}
+						else{
+							msg[index] = args[i][j];
+						}
 						index++;
 					}
 				}
 			}
 			msg[index] = '\0';
-			onMsgPtr(msg, by);
+			onMsgPtr(msg, by, channel);
 		}
 	}
 	else{
@@ -125,7 +142,7 @@ void *inputListener(void *vargp){
 	}
 }
 
-void setMsgHandler(void (*funPtr)(char*, char*)){
+void setMsgHandler(void (*funPtr)(char*, char*, char*)){
 	onMsgPtr = funPtr;
 }
 
