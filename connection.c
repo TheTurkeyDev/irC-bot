@@ -11,6 +11,7 @@
 #include <semaphore.h>
 #define PORT 6667
 
+int connected = 1;
 sem_t lock;
 int sock = 0;
 pthread_t inputThread; 
@@ -42,6 +43,20 @@ void setUser(char* nick){
 void joinChannel(char* channel){
 	char msg[512] = "JOIN ";
 	strcat(msg, channel);
+	strcat(msg, "\r\n");
+	sendMessage(msg);
+}
+
+void partChannel(char* channel){
+	char msg[512] = "Part ";
+	strcat(msg, channel);
+	strcat(msg, ":Goodbye\r\n");
+	sendMessage(msg);
+}
+
+void quitIRC(char* from){
+	char msg[512] = "QUIT :Bot instructed to leave channel by ";
+	strcat(msg, from);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
 }
@@ -162,7 +177,7 @@ int readLine(char* buffer){
 
 void *inputListener(void *vargp){
 	char buffer[1024];
-	while(1){
+	while(connected){
 		int numbytes = readLine(buffer);
 		if(numbytes > 0){
 			char* command;
@@ -226,6 +241,7 @@ void initConnect(char* ip){
 }
 
 void cleanup(){
+	connected = 0;
     	pthread_join(inputThread, NULL); 
 	close(sock);
 }

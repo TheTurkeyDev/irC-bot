@@ -72,12 +72,13 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 	}
 	else if(strcmp(command, "!leave") == 0) {
 		run = 0;
+		quitIRC(from);
 	}
 	else if(strcmp(command, "!delay") == 0) {
 		pthread_t inputThread;
 		delay_struct *dargs = malloc(sizeof *dargs);
-        	dargs->sender = "Turkey";
-		dargs->channel = "#theprogrammingturkey";
+        	dargs->sender = from;
+		dargs->channel = channel;
 		char* delayChar = strtok(NULL," ");
 		int delay = delayChar[0] - '0';
 		dargs->delay = delay;
@@ -101,6 +102,7 @@ int main(){
 	joinChannel("#TheprogrammingTurkey");
 	while(run){
 	}
+	
 	cleanup();
 	return 0;
 }
