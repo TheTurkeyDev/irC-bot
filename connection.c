@@ -7,9 +7,11 @@
 #include <netinet/in.h> 
 #include <sys/socket.h> 
 #include <unistd.h>
-#include <pthread.h> 
+#include <pthread.h>
+#include <semaphore.h>
 #define PORT 6667
 
+sem_t lock;
 int sock = 0;
 pthread_t inputThread; 
 void (*onMsgPtr)(char*, char*, char*);
@@ -45,12 +47,14 @@ void joinChannel(char* channel){
 }
 
 void sendChat(char* channel, char* toSend){
+	sem_wait(&lock);
 	char msg[512] = "PRIVMSG ";
 	strcat(msg, channel);
 	strcat(msg, " :");
 	strcat(msg, toSend);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
+	sem_post(&lock);
 }
 
 void onMessage(char* command, char* args[], int numArgs, char* by){
@@ -84,20 +88,19 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 						index++;
 					}
 				}
+				msg[index] = ' ';
+				index++;
 			}
 			msg[index] = '\0';
 			char from[128];
 			index = 0;
 			for(int i = 0; i <= strlen(by) - 1; i++){
-				if(by[i] != ':')
-				{
-					if(by[i] != '!')
-					{
+				if(by[i] != ':'){
+					if(by[i] != '!'){
 						from[index] = by[i];
 						index++;
 					}
-					else
-					{
+					else{
 						break;
 					}
 				}
@@ -189,6 +192,7 @@ void setMsgHandler(void (*funPtr)(char*, char*, char*)){
 }
 
 void initConnect(char* ip){
+	sem_init(&lock,0,1);
 	struct sockaddr_in server_socket;
 	struct hostent *host;
 	int numbytes;
