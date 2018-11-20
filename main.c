@@ -9,7 +9,7 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 		char response[512] = "";
 		strcat(response, "Hello ");
 		strcat(response, from);
-		strcat(response, " !");
+		strcat(response, "!");
 		sendChat(channel, response);
 	}
 	else if(strcmp(command, "!info") == 0) {

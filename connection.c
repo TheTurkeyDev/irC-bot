@@ -86,15 +86,57 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 				}
 			}
 			msg[index] = '\0';
-			onMsgPtr(msg, by, channel);
+			char from[128];
+			index = 0;
+			for(int i = 0; i <= strlen(by) - 1; i++){
+				if(by[i] != ':')
+				{
+					if(by[i] != '!')
+					{
+						from[index] = by[i];
+						index++;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			from[index] = '\0';
+			onMsgPtr(msg, from, channel);
 		}
+	}
+	else if(strcmp(command, "JOIN") == 0){
+		printf("%s has joined %s\n", by, args[0]);
+	}
+	else if(strcmp(command, "PART") == 0){
+		printf("%s has left %s\n", by, args[0]);
+	}
+	else if(strcmp(command, "MODE") == 0){
+		printf("Mode changed to %s for %s\n", args[1], args[0]);
+	}
+	else if(strcmp(command, "NOTICE") == 0){
+		char msg[1024];
+		int index = 0;
+		for(int i = 0; i < numArgs - 1; i++){
+			for(int j = 0; j <= strlen(args[i]) - 1; j++){
+				if(args[i][j] != '\0' && args[i][j] != ':'){
+					msg[index] = args[i][j];
+					index++;
+				}
+			}
+			msg[index] = ' ';
+			index++;
+		}
+		msg[index] = '\0';
+		printf("NOTICE %s\n", msg);
 	}
 	else{
 		printf("Unknown command recieved!: ");
 		printf("%s ", command);
-		for(int index = 0; index < numArgs - 1; index++){
-			printf("%s ", args[index]);
-		}
+		//for(int index = 0; index < numArgs - 1; index++){
+		//	printf("%s ", args[index]);
+		//}
 		printf("\n");
 	}
 }
