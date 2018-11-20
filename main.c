@@ -17,14 +17,13 @@ int run = 1;
 void *delayListener(void *vargs){
 	delay_struct *actual_args = vargs;
 	
-	printf("Here\n");
 	sleep(actual_args->delay);
 
 	char response[512] = "";
 	strcat(response, "Hey ");
 	strcat(response, actual_args->sender);
 	strcat(response, " this is your delayed message!");
-	sendChat(actual_args->channel, response);	
+	sendChat(actual_args->channel, response);
 }
 
 void onIRCMessage(char* msg, char* from, char* channel) {
@@ -77,15 +76,15 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 	else if(strcmp(command, "!delay") == 0) {
 		pthread_t inputThread;
 		delay_struct *dargs = malloc(sizeof *dargs);
-        	dargs->sender = from;
-		dargs->channel = channel;
+        	dargs->sender = "Turkey";
+		dargs->channel = "#theprogrammingturkey";
 		char* delayChar = strtok(NULL," ");
 		int delay = delayChar[0] - '0';
 		dargs->delay = delay;
-		if(pthread_create(&inputThread, NULL, delayListener, dargs))
+		if(pthread_create(&inputThread, NULL, delayListener, NULL))
 		{
-			free(dargs);
 			pthread_join(inputThread, NULL);
+			free(dargs);
 		}
 	}
 

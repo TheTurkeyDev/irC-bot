@@ -135,12 +135,12 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		printf("NOTICE %s\n", msg);
 	}
 	else{
-		printf("Unknown command recieved!: ");
-		printf("%s ", command);
+		//printf("Unknown command recieved!: ");
+		//printf("%s ", command);
 		//for(int index = 0; index < numArgs - 1; index++){
 		//	printf("%s ", args[index]);
 		//}
-		printf("\n");
+		//printf("\n");
 	}
 }
 
