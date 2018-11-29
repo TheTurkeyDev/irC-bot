@@ -1,2 +1,2 @@
 all:
-	gcc -o irCbot main.c connection.c -I. -lpthread
+	gcc -pthread -o irCbot main.c connection.c -I.

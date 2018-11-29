@@ -6,25 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-typedef struct {
-	char* sender;
-	char* channel;
-	int delay;
-} delay_struct;
-
 int run = 1;
-
-void *delayListener(void *vargs){
-	delay_struct *actual_args = vargs;
-	
-	sleep(actual_args->delay);
-
-	char response[512] = "";
-	strcat(response, "Hey ");
-	strcat(response, actual_args->sender);
-	strcat(response, " this is your delayed message!");
-	sendChat(actual_args->channel, response);
-}
 
 void onIRCMessage(char* msg, char* from, char* channel) {
 	char* command = strtok (msg," ");
@@ -71,22 +53,8 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 		sendChat(channel, response);
 	}
 	else if(strcmp(command, "!leave") == 0) {
-		run = 0;
 		quitIRC(from);
-	}
-	else if(strcmp(command, "!delay") == 0) {
-		pthread_t inputThread;
-		delay_struct *dargs = malloc(sizeof *dargs);
-        	dargs->sender = from;
-		dargs->channel = channel;
-		char* delayChar = strtok(NULL," ");
-		int delay = delayChar[0] - '0';
-		dargs->delay = delay;
-		if(pthread_create(&inputThread, NULL, delayListener, NULL))
-		{
-			pthread_join(inputThread, NULL);
-			free(dargs);
-		}
+		run = 0;
 	}
 
 	printf("Recieved a message from: %s \"%s\" in: %s\n", from, msg, channel);
@@ -100,9 +68,9 @@ int main(){
 	setUser(userName);
 	setNickname(userName);
 	joinChannel("#TheprogrammingTurkey");
+	
 	while(run){
 	}
-	
 	cleanup();
 	return 0;
 }

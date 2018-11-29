@@ -14,14 +14,15 @@
 int connected = 1;
 sem_t lock;
 int sock = 0;
-pthread_t inputThread; 
 void (*onMsgPtr)(char*, char*, char*);
 
 void sendMessage(char* msg){
+	sem_wait(&lock);
 	if(send(sock, msg, strlen(msg), 0) < 0)
 	{
 		printf("%s%s\n", "An error has occure when sending the message: ", msg);
 	}
+	sem_post(&lock);
 }
 
 void setNickname(char* nick){
@@ -62,14 +63,12 @@ void quitIRC(char* from){
 }
 
 void sendChat(char* channel, char* toSend){
-	sem_wait(&lock);
 	char msg[512] = "PRIVMSG ";
 	strcat(msg, channel);
 	strcat(msg, " :");
 	strcat(msg, toSend);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
-	sem_post(&lock);
 }
 
 void onMessage(char* command, char* args[], int numArgs, char* by){
@@ -236,12 +235,12 @@ void initConnect(char* ip){
 		printf("Connected! \n");
 	}
 
+	pthread_t inputThread; 
     	pthread_create(&inputThread, NULL, inputListener, NULL); 
 
 }
 
 void cleanup(){
+ 	close(sock);
 	connected = 0;
-    	pthread_join(inputThread, NULL); 
-	close(sock);
 }
