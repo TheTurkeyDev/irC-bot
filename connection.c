@@ -15,6 +15,7 @@ int connected = 1;
 sem_t lock;
 int sock = 0;
 void (*onMsgPtr)(char*, char*, char*);
+int channelCount = 0;
 
 void sendMessage(char* msg){
 	sem_wait(&lock);
@@ -23,6 +24,13 @@ void sendMessage(char* msg){
 		printf("%s%s\n", "An error has occure when sending the message: ", msg);
 	}
 	sem_post(&lock);
+}
+
+void quitIRC(char* from){
+	char msg[512] = "QUIT :Bot instructed to shutdown by ";
+	strcat(msg, from);
+	strcat(msg, "\r\n");
+	sendMessage(msg);
 }
 
 void setNickname(char* nick){
@@ -46,6 +54,7 @@ void joinChannel(char* channel){
 	strcat(msg, channel);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
+	channelCount++;
 }
 
 void partChannel(char* channel){
@@ -53,13 +62,10 @@ void partChannel(char* channel){
 	strcat(msg, channel);
 	strcat(msg, " :Goodbye\r\n");
 	sendMessage(msg);
-}
-
-void quitIRC(char* from){
-	char msg[512] = "QUIT :Bot instructed to shutdown by ";
-	strcat(msg, from);
-	strcat(msg, "\r\n");
-	sendMessage(msg);
+	channelCount--;
+	if(channelCount == 0){
+		quitIRC("System");
+	}
 }
 
 void sendChat(char* channel, char* toSend){
@@ -124,10 +130,12 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		}
 	}
 	else if(strcmp(command, "JOIN") == 0){
-		printf("%s has joined %s\n", by, args[0]);
+		char* username = strtok(by, "!");
+		printf("%s has joined %s\n", username + 1, args[0]);
 	}
 	else if(strcmp(command, "PART") == 0){
-		printf("%s has left %s\n", by, args[0]);
+		har* username = strtok(by, "!");
+		printf("%s has left %s\n", username + 1, args[0]);
 	}
 	else if(strcmp(command, "MODE") == 0){
 		printf("Mode changed to %s for %s\n", args[1], args[0]);
@@ -149,12 +157,12 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		printf("NOTICE %s\n", msg);
 	}
 	else{
-		//printf("Unknown command recieved!: ");
-		//printf("%s ", command);
-		//for(int index = 0; index < numArgs - 1; index++){
-		//	printf("%s ", args[index]);
-		//}
-		//printf("\n");
+		/*printf("Unknown command recieved!: ");
+		printf("%s ", command);
+		for(int index = 0; index < numArgs - 1; index++){
+			printf("%s ", args[index]);
+		}
+		printf("\n");*/
 	}
 }
 
@@ -206,6 +214,7 @@ void setMsgHandler(void (*funPtr)(char*, char*, char*)){
 }
 
 void initConnect(char* ip){
+	channelCount = 0;
 	sem_init(&lock,0,1);
 	struct sockaddr_in server_socket;
 	struct hostent *host;
