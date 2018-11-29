@@ -53,6 +53,9 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 		sendChat(channel, response);
 	}
 	else if(strcmp(command, "!leave") == 0) {
+		partChannel(channel);
+	}
+	else if(strcmp(command, "!shutdown") == 0) {
 		quitIRC(from);
 		run = 0;
 	}
@@ -68,6 +71,7 @@ int main(){
 	setUser(userName);
 	setNickname(userName);
 	joinChannel("#TheprogrammingTurkey");
+	joinChannel("#turkeydev");
 	
 	while(run){
 	}

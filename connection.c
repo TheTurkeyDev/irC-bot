@@ -51,12 +51,12 @@ void joinChannel(char* channel){
 void partChannel(char* channel){
 	char msg[512] = "Part ";
 	strcat(msg, channel);
-	strcat(msg, ":Goodbye\r\n");
+	strcat(msg, " :Goodbye\r\n");
 	sendMessage(msg);
 }
 
 void quitIRC(char* from){
-	char msg[512] = "QUIT :Bot instructed to leave channel by ";
+	char msg[512] = "QUIT :Bot instructed to shutdown by ";
 	strcat(msg, from);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
@@ -80,9 +80,9 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 	}
 	else if(strcmp(command, "PRIVMSG") == 0){
 		if(onMsgPtr != NULL){
-			char msg[1024];
+			char msg[1024] = "";
 			int index = 0;
-			char channel[128];
+			char channel[128] = "";
 			int chanFound = 0;
 			for(int i = 0; i < numArgs - 1; i++){
 				for(int j = 0; j <= strlen(args[i]) - 1; j++){

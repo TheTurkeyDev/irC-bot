@@ -2,6 +2,7 @@ void sendMessage(char* msg);
 void setNickname(char* nick);
 void setUser(char* nick);
 void joinChannel(char* channel);
+void partChannel(char* channel);
 void quitIRC(char*);
 void sendChat(char* channel, char* toSend);
 void setMsgHandler(void (*funPtr)(char*, char*, char*));
