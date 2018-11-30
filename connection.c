@@ -16,6 +16,7 @@ sem_t lock;
 int sock = 0;
 void (*onMsgPtr)(char*, char*, char*);
 int channelCount = 0;
+int mathEquationTotal = 0;
 
 void sendMessage(char* msg){
 	sem_wait(&lock);
@@ -47,6 +48,16 @@ void setUser(char* nick){
 	strcat(msg, nick);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
+
+	char response[512] = "";
+	strcat(response, "IRC Bot options: ");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "");
+	strcat(response, from);
+	strcat(response, "");
+	sendChat(channel, response);
 }
 
 void joinChannel(char* channel){
@@ -55,6 +66,7 @@ void joinChannel(char* channel){
 	strcat(msg, "\r\n");
 	sendMessage(msg);
 	channelCount++;
+	listOptions(channel);
 }
 
 void partChannel(char* channel){
@@ -66,6 +78,139 @@ void partChannel(char* channel){
 	if(channelCount == 0){
 		quitIRC("System");
 	}
+}
+
+void listOptions(char* channel){
+	char response[512] = "";
+	strcat(response, "IRC Bot options: ");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "        Option 1: \"!hi\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "        Option 2: \"!info\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "        Option 3: \"!leave\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "        Option 4: \"!shutdown\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "        Option 5: \"!CalculatorMode\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "To see available options: \"!options\"");
+	sendChat(channel, response);
+}
+
+void enterCalculatorMode(char* channel){
+	char response[512] = "";
+	strcat(response, "How the Calculator Works: ");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "Step 1: select an option from the list of available options.");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "Step 2: if the option is a mathematical opertion then put a space after the command ");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "and type the value you wish to conduct the opertion on.");
+	sendChat(channel, response);
+}
+
+void listCalculatorOptions(char* channel){
+	char response[512] = "";
+	strcat(response, "Calculator options: ");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 1: \"!add\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 2: \"!subtract\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 3: \"!multiply\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 4: \"!divide\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 5: \"!equal\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 6: \"!clear\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "          Option 7: \"!exitCalculatorMode\"");
+	sendChat(channel, response);
+
+	response = "";
+	strcat(response, "To see available options: \"!options\"");
+	sendChat(channel, response);
+}
+
+void add(char* channel, int toBeAdded){
+	mathEquationTotal = mathEquationTotal + toBeAdded;
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
+}
+
+void subtract(char* channel, int toBeSubtracted){
+	mathEquationTotal = mathEquationTotal - toBeSubtracted;
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
+}
+
+void multiply(char* channel. int toBemultiplied){
+	mathEquationTotal = mathEquationTotal * toBemultiplied;
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
+}
+
+void divide(char* channel. int toBeDivided){
+	mathEquationTotal = mathEquationTotal * toBemultiplied;
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
+}
+
+void equal(char* channel. int toBemultiplied){
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
+}
+
+void clear(char* channel){
+	mathEquationTotal = 0;
+	char response[512] = "";
+	char stringNum[10];
+	strcat(response, "Equals: " + itoa(mathEquationTotal,stringNum,10));
+	sendChat(channel, response);
 }
 
 void sendChat(char* channel, char* toSend){
