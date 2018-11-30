@@ -134,7 +134,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		printf("%s has joined %s\n", username + 1, args[0]);
 	}
 	else if(strcmp(command, "PART") == 0){
-		har* username = strtok(by, "!");
+		char* username = strtok(by, "!");
 		printf("%s has left %s\n", username + 1, args[0]);
 	}
 	else if(strcmp(command, "MODE") == 0){
