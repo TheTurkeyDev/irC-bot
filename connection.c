@@ -7,30 +7,18 @@
 #include <netinet/in.h> 
 #include <sys/socket.h> 
 #include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include <pthread.h> 
 #define PORT 6667
 
-int connected = 1;
-sem_t lock;
 int sock = 0;
+pthread_t inputThread; 
 void (*onMsgPtr)(char*, char*, char*);
-int channelCount = 0;
 
 void sendMessage(char* msg){
-	sem_wait(&lock);
 	if(send(sock, msg, strlen(msg), 0) < 0)
 	{
 		printf("%s%s\n", "An error has occure when sending the message: ", msg);
 	}
-	sem_post(&lock);
-}
-
-void quitIRC(char* from){
-	char msg[512] = "QUIT :Bot instructed to shutdown by ";
-	strcat(msg, from);
-	strcat(msg, "\r\n");
-	sendMessage(msg);
 }
 
 void setNickname(char* nick){
@@ -54,18 +42,6 @@ void joinChannel(char* channel){
 	strcat(msg, channel);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
-	channelCount++;
-}
-
-void partChannel(char* channel){
-	char msg[512] = "Part ";
-	strcat(msg, channel);
-	strcat(msg, " :Goodbye\r\n");
-	sendMessage(msg);
-	channelCount--;
-	if(channelCount == 0){
-		quitIRC("System");
-	}
 }
 
 void sendChat(char* channel, char* toSend){
@@ -86,9 +62,9 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 	}
 	else if(strcmp(command, "PRIVMSG") == 0){
 		if(onMsgPtr != NULL){
-			char msg[1024] = "";
+			char msg[1024];
 			int index = 0;
-			char channel[128] = "";
+			char channel[128];
 			int chanFound = 0;
 			for(int i = 0; i < numArgs - 1; i++){
 				for(int j = 0; j <= strlen(args[i]) - 1; j++){
@@ -108,61 +84,18 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 						index++;
 					}
 				}
-				msg[index] = ' ';
-				index++;
 			}
 			msg[index] = '\0';
-			char from[128];
-			index = 0;
-			for(int i = 0; i <= strlen(by) - 1; i++){
-				if(by[i] != ':'){
-					if(by[i] != '!'){
-						from[index] = by[i];
-						index++;
-					}
-					else{
-						break;
-					}
-				}
-			}
-			from[index] = '\0';
-			onMsgPtr(msg, from, channel);
+			onMsgPtr(msg, by, channel);
 		}
-	}
-	else if(strcmp(command, "JOIN") == 0){
-		char* username = strtok(by, "!");
-		printf("%s has joined %s\n", username + 1, args[0]);
-	}
-	else if(strcmp(command, "PART") == 0){
-		har* username = strtok(by, "!");
-		printf("%s has left %s\n", username + 1, args[0]);
-	}
-	else if(strcmp(command, "MODE") == 0){
-		printf("Mode changed to %s for %s\n", args[1], args[0]);
-	}
-	else if(strcmp(command, "NOTICE") == 0){
-		char msg[1024];
-		int index = 0;
-		for(int i = 0; i < numArgs - 1; i++){
-			for(int j = 0; j <= strlen(args[i]) - 1; j++){
-				if(args[i][j] != '\0' && args[i][j] != ':'){
-					msg[index] = args[i][j];
-					index++;
-				}
-			}
-			msg[index] = ' ';
-			index++;
-		}
-		msg[index] = '\0';
-		printf("NOTICE %s\n", msg);
 	}
 	else{
-		/*printf("Unknown command recieved!: ");
+		printf("Unknown command recieved!: ");
 		printf("%s ", command);
 		for(int index = 0; index < numArgs - 1; index++){
 			printf("%s ", args[index]);
 		}
-		printf("\n");*/
+		printf("\n");
 	}
 }
 
@@ -184,7 +117,7 @@ int readLine(char* buffer){
 
 void *inputListener(void *vargp){
 	char buffer[1024];
-	while(connected){
+	while(1){
 		int numbytes = readLine(buffer);
 		if(numbytes > 0){
 			char* command;
@@ -214,8 +147,6 @@ void setMsgHandler(void (*funPtr)(char*, char*, char*)){
 }
 
 void initConnect(char* ip){
-	channelCount = 0;
-	sem_init(&lock,0,1);
 	struct sockaddr_in server_socket;
 	struct hostent *host;
 	int numbytes;
@@ -244,12 +175,11 @@ void initConnect(char* ip){
 		printf("Connected! \n");
 	}
 
-	pthread_t inputThread; 
     	pthread_create(&inputThread, NULL, inputListener, NULL); 
 
 }
 
 void cleanup(){
- 	close(sock);
-	connected = 0;
+    	pthread_join(inputThread, NULL); 
+	close(sock);
 }
