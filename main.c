@@ -12,6 +12,7 @@ time_t start_time;
 int calculatorMode = 0;
 int mathEquationTotal = 0;
 
+//Lists out the valid commands that the bot accepts
 void listOptions(char* channel){
 	char response[512] = "";
 	strcat(response, "IRC Bot options: ");
@@ -46,6 +47,7 @@ void listOptions(char* channel){
 	sendChat(channel, response);
 }
 
+// Sets the bot to be in calculator mode and gives relavent information
 void enterCalculatorMode(char* channel){
 	char response[512] = "";
 	strcat(response, "How the Calculator Works: ");
@@ -64,6 +66,7 @@ void enterCalculatorMode(char* channel){
 	sendChat(channel, response);
 }
 
+// Lists out the valid commands when the bot is in calculator mode
 void listCalculatorOptions(char* channel){
 	char response[512] = "";
 	strcat(response, "Calculator options: ");
@@ -102,6 +105,7 @@ void listCalculatorOptions(char* channel){
 	sendChat(channel, response);
 }
 
+//Performs the add operation
 void add(char* channel, int toBeAdded){
 	mathEquationTotal = mathEquationTotal + toBeAdded;
 	char response[512] = "";
@@ -112,6 +116,7 @@ void add(char* channel, int toBeAdded){
 	sendChat(channel, response);
 }
 
+//Performs the subtract operation
 void subtract(char* channel, int toBeSubtracted){
 	mathEquationTotal = mathEquationTotal - toBeSubtracted;
 	char response[512] = "";
@@ -122,6 +127,7 @@ void subtract(char* channel, int toBeSubtracted){
 	sendChat(channel, response);
 }
 
+//Performs the multiply operation
 void multiply(char* channel, int toBemultiplied){
 	mathEquationTotal = mathEquationTotal * toBemultiplied;
 	char response[512] = "";
@@ -132,6 +138,7 @@ void multiply(char* channel, int toBemultiplied){
 	sendChat(channel, response);
 }
 
+//Performs the divide operation
 void divide(char* channel, int toBeDivided){
 	mathEquationTotal = mathEquationTotal / toBeDivided;
 	char response[512] = "";
@@ -142,6 +149,7 @@ void divide(char* channel, int toBeDivided){
 	sendChat(channel, response);
 }
 
+//Outputs what the expression currently equals
 void equal(char* channel){
 	char response[512] = "";
 	char stringNum[10];
@@ -151,6 +159,7 @@ void equal(char* channel){
 	sendChat(channel, response);
 }
 
+//Clears the calculators current value and resets it to 0
 void clear(char* channel){
 	mathEquationTotal = 0;
 	char response[512] = "";
@@ -161,7 +170,9 @@ void clear(char* channel){
 	sendChat(channel, response);
 }
 
+//Calback for when the bot recieves a private message
 void onIRCMessage(char* msg, char* from, char* channel) {
+	// Grabs the first part of the message. Up to the first space to check for a command.
 	char* command = strtok (msg," ");
 	if(calculatorMode){
 	 	if(strcmp(command, "!add") == 0){
@@ -214,6 +225,7 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 		else if(strcmp(command, "!info") == 0) {
 			char response[512] = "";
 
+			// Grabs relavent system information
 			struct utsname unameInfo;
 			uname(&unameInfo);
 
@@ -254,6 +266,7 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 			run = 0;
 		}
 		else if(strcmp(command, "!uptime") == 0) {
+			//Grabs the current time and checks for how long its been since the program started and outputs the time since to the given channel.
 			char response[512] = "";
 			time_t s;
 			struct timespec spec;
@@ -283,24 +296,26 @@ void onIRCMessage(char* msg, char* from, char* channel) {
 		}
 	}
 	printf("Recieved a message from: %s \"%s\" in: %s\n", from, msg, channel);
-
 }
 
 int main(){
-	
+	//Load and store the initial start time of the program
 	struct timespec spec;
 	clock_gettime(CLOCK_REALTIME, &spec);
 	start_time = spec.tv_sec;
-	
-	char *ip = "195.154.200.232";
+
+	// Connect to the irc server
+	char *ip = "195.154.200.232"; //Freenode's IP
 	setMsgHandler(onIRCMessage);
 	initConnect(ip);
-	char* userName = "TurkeyBotC";
+	char* userName = "TurkeyBotC";	//Bot's username
 	setUser(userName);
 	setNickname(userName);
+	
 	joinChannel("#TheprogrammingTurkey");
 	joinChannel("#turkeydev");
 	
+	// Hold execution here so the program doesn't just end
 	while(run){
 	}
 	cleanup();

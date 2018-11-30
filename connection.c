@@ -17,6 +17,7 @@ int sock = 0;
 void (*onMsgPtr)(char*, char*, char*);
 int channelCount = 0;
 
+//Sends a message through the currently open socket
 void sendMessage(char* msg){
 	sem_wait(&lock);
 	if(send(sock, msg, strlen(msg), 0) < 0)
@@ -26,6 +27,7 @@ void sendMessage(char* msg){
 	sem_post(&lock);
 }
 
+//Sends a quit message to the server to disconnect the bot.
 void quitIRC(char* from){
 	char msg[512] = "QUIT :Bot instructed to shutdown by ";
 	strcat(msg, from);
@@ -33,6 +35,7 @@ void quitIRC(char* from){
 	sendMessage(msg);
 }
 
+//Sends a nick message to the server to set the nickname of the bot
 void setNickname(char* nick){
 	char msg[512] = "NICK ";
 	strcat(msg, nick);
@@ -40,6 +43,7 @@ void setNickname(char* nick){
 	sendMessage(msg);
 }
 
+//Sends a user message to the server to initialize the user connection
 void setUser(char* nick){
 	char msg[512] = "USER ";
 	strcat(msg, nick);
@@ -49,25 +53,30 @@ void setUser(char* nick){
 	sendMessage(msg);
 }
 
+//Sends a join message to the server for the bot to connect to a specific channel
 void joinChannel(char* channel){
 	char msg[512] = "JOIN ";
 	strcat(msg, channel);
 	strcat(msg, "\r\n");
 	sendMessage(msg);
+	//Increase the amount of channels we are connected to
 	channelCount++;
 }
 
+//Sends a part message to the server for the bot to leave a specific channel
 void partChannel(char* channel){
 	char msg[512] = "Part ";
 	strcat(msg, channel);
 	strcat(msg, " :Goodbye\r\n");
 	sendMessage(msg);
+	//Decrease the amount of channels we are connected to and if at 0, then disconnect the bot
 	channelCount--;
 	if(channelCount == 0){
 		quitIRC("System");
 	}
 }
 
+//Sends a chat or "Privmsg" message to the server for the bot to send a cht message in a channel
 void sendChat(char* channel, char* toSend){
 	char msg[512] = "PRIVMSG ";
 	strcat(msg, channel);
@@ -77,8 +86,10 @@ void sendChat(char* channel, char* toSend){
 	sendMessage(msg);
 }
 
+//When the bot recieves a message from a server
 void onMessage(char* command, char* args[], int numArgs, char* by){
 	if(strcmp(command,"PING") == 0){
+		//Respond to the ping message with a pong to keep the connection alive
 		char msg[512] = "PONG ";
 		strcat(msg, args[0]);
 		strcat(msg, "\r\n");
@@ -86,6 +97,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 	}
 	else if(strcmp(command, "PRIVMSG") == 0){
 		if(onMsgPtr != NULL){
+			//Parse out the various parts of the privmsg to pass along to the callback the implementing program provided (if one was provided)
 			char msg[1024] = "";
 			int index = 0;
 			char channel[128] = "";
@@ -114,6 +126,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 			msg[index] = '\0';
 			char from[128];
 			index = 0;
+			//Format the username of the sender to remove uneeded info
 			for(int i = 0; i <= strlen(by) - 1; i++){
 				if(by[i] != ':'){
 					if(by[i] != '!'){
@@ -143,6 +156,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 	else if(strcmp(command, "NOTICE") == 0){
 		char msg[1024];
 		int index = 0;
+		//Formats the Notice to remove extra charecters that aren't needed to be displayed
 		for(int i = 0; i < numArgs - 1; i++){
 			for(int j = 0; j <= strlen(args[i]) - 1; j++){
 				if(args[i][j] != '\0' && args[i][j] != ':'){
@@ -157,6 +171,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 		printf("NOTICE %s\n", msg);
 	}
 	else{
+		//Used to help debug unknown messages
 		/*printf("Unknown command recieved!: ");
 		printf("%s ", command);
 		for(int index = 0; index < numArgs - 1; index++){
@@ -166,6 +181,7 @@ void onMessage(char* command, char* args[], int numArgs, char* by){
 	}
 }
 
+//Reads input from the socket until "\r\n" is recieved and then returns the recieved message to be parsed
 int readLine(char* buffer){
 	int length = 0;
 	int found = 0;
@@ -182,6 +198,7 @@ int readLine(char* buffer){
 	}
 }
 
+//Thread method for receiving messages so that this file doesn't hold up the implementers program and prevent them from performing thier own actions after connecting the bot to the irc server.
 void *inputListener(void *vargp){
 	char buffer[1024];
 	while(connected){
@@ -209,16 +226,19 @@ void *inputListener(void *vargp){
 	}
 }
 
+//Method for the implementing program to set the call-back function for when the bot recieves a privmsg so that the implementer can add their own commands
 void setMsgHandler(void (*funPtr)(char*, char*, char*)){
 	onMsgPtr = funPtr;
 }
 
+//Instatiates the bots connection to the privided ip for an IRC server
 void initConnect(char* ip){
 	channelCount = 0;
 	sem_init(&lock,0,1);
 	struct sockaddr_in server_socket;
 	struct hostent *host;
 	int numbytes;
+	//create the socket
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if(sock == -1){
 		printf("Failed to create the socket! \n");
@@ -236,6 +256,7 @@ void initConnect(char* ip){
 	server_socket.sin_addr = *((struct in_addr *)host->h_addr);
 	bzero(&(server_socket.sin_zero), 8);
 	
+	//Connect the socket to the desired address
 	if(connect(sock, (struct sockaddr *) &server_socket, sizeof(server_socket)) < 0){
 		printf("Failed to connect! \n");
 		return;
@@ -244,11 +265,13 @@ void initConnect(char* ip){
 		printf("Connected! \n");
 	}
 
+	//Start the input collection thread
 	pthread_t inputThread; 
     	pthread_create(&inputThread, NULL, inputListener, NULL); 
 
 }
 
+//Clean up and close our sockets
 void cleanup(){
  	close(sock);
 	connected = 0;
